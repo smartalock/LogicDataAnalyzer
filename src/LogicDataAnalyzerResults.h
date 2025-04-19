@@ -20,6 +20,10 @@ public:
 	virtual void GenerateTransactionTabularText( U64 transaction_id, DisplayBase display_base );
 
 protected: //functions
+	const char *FormatCommand(U16 command);
+	const char *FormatDisplay(U16 command, U8 data, char *buf, size_t buflen);
+	bool ValidWord(U32 word, U16 *command, U8 *data);
+
 
 protected:  //vars
 	LogicDataAnalyzerSettings* mSettings;

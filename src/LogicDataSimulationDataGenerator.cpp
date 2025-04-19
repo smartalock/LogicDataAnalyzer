@@ -22,8 +22,9 @@ LogicDataSimulationDataGenerator::~LogicDataSimulationDataGenerator()
 
 void LogicDataSimulationDataGenerator::Initialize( U32 simulation_sample_rate, LogicDataAnalyzerSettings* settings )
 {
-	mSimulationSampleRateHz = simulation_sample_rate;
 	mSettings = settings;
+	mSimulationSampleRateHz = simulation_sample_rate;
+	mSamplesPerBit = mSimulationSampleRateHz / mSettings->mBitRate;
 
 	mSerialSimulationData.SetChannel( mSettings->mInputChannel );
 	mSerialSimulationData.SetSampleRate( simulation_sample_rate );
@@ -45,11 +46,10 @@ U32 LogicDataSimulationDataGenerator::GenerateSimulationData( U64 largest_sample
 
 void LogicDataSimulationDataGenerator::CreateSerialWord()
 {
-	U32 samples_per_bit = mSimulationSampleRateHz / mSettings->mBitRate;
 
 	if (mStringIndex == 0) {
 		mSerialSimulationData.TransitionIfNeeded( BIT_HIGH );
-		mSerialSimulationData.Advance( samples_per_bit * 300 );
+		mSerialSimulationData.Advance( mSamplesPerBit * 300 );
 	}
 
 	uint32_t word = test_data[mStringIndex];
@@ -61,14 +61,14 @@ void LogicDataSimulationDataGenerator::CreateSerialWord()
 
 	// Write 50ms SYNC
 	mSerialSimulationData.TransitionIfNeeded( BIT_LOW );
-	mSerialSimulationData.Advance( samples_per_bit * 50 );
+	mSerialSimulationData.Advance( mSamplesPerBit * 50 );
 	for( U32 i=0; i<32; i++ ) {
 		if (word & 0x80000000) {
 			mSerialSimulationData.TransitionIfNeeded( BIT_LOW );
 		} else {
 			mSerialSimulationData.TransitionIfNeeded( BIT_HIGH );
 		}
-		mSerialSimulationData.Advance( samples_per_bit );
+		mSerialSimulationData.Advance( mSamplesPerBit );
 		word = word << 1;
 	}
 

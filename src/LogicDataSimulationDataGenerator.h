@@ -17,6 +17,7 @@ public:
 protected:
 	LogicDataAnalyzerSettings* mSettings;
 	U32 mSimulationSampleRateHz;
+	U32 mSamplesPerBit;
 
 protected:
 	void CreateSerialWord();

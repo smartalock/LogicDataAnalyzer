@@ -33,8 +33,6 @@ void LogicDataAnalyzer::WorkerThread()
 
 	for( ; ; )
 	{
-
-
 		if (mSerial->GetBitState() == BIT_HIGH) {
 			mSerial->AdvanceToNextEdge();
 		}
@@ -63,14 +61,26 @@ void LogicDataAnalyzer::WorkerThread()
 
 			mSerial->Advance(0.5 * samples_per_bit);
 			U32 word = 0;
+			U8 ones = 0;
 
 			for( U32 i=0; i < 32; i++ ) {
-				word = word << 1;
+				word = word >> 1;
 				if (mSerial->GetBitState() == BIT_HIGH) {
 					mResults->AddMarker( mSerial->GetSampleNumber(), AnalyzerResults::Zero, mSettings.mInputChannel );
 				} else {
+					ones++;
 					mResults->AddMarker( mSerial->GetSampleNumber(), AnalyzerResults::One, mSettings.mInputChannel );
-					word |= 0x00000001;
+					word |= 0x80000000;
+				}
+
+				if (i == 31) {
+					// Check parity
+					if ((ones % 2) == 0) {
+						// Parity OK
+					} else {
+						// Parity Error
+						mResults->AddMarker( mSerial->GetSampleNumber(), AnalyzerResults::ErrorX, mSettings.mInputChannel );
+					}
 				}
 
 				if (i < 31) {
@@ -89,8 +99,10 @@ void LogicDataAnalyzer::WorkerThread()
 			dataFrame.mStartingSampleInclusive = sync_finish;
 			dataFrame.mEndingSampleInclusive = mSerial->GetSampleNumber();
 
-			mResults->AddFrame( dataFrame );
-			mResults->CommitResults();
+			if (word != 0) {
+				mResults->AddFrame( dataFrame );
+				mResults->CommitResults();
+			}
 			ReportProgress( dataFrame.mEndingSampleInclusive );
 
 		} else {
